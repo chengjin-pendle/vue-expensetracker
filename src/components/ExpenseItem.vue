@@ -22,11 +22,11 @@ const handleClick = () => {
       <p class="mt-1">RM {{ expense?.amount }}</p>
     </div>
 
-    <div
+    <button
       @click="handleClick"
       class="bg-red-500 text-white px-2 rounded-md cursor-pointer select-none text-sm"
     >
-      <p>Remove</p>
-    </div>
+      Remove
+    </button>
   </div>
 </template>

@@ -1,9 +1,5 @@
 <script setup lang="ts">
 const props = defineProps({
-  label: {
-    type: String,
-    default: 'Yes'
-  },
   disabled: Boolean
 })
 </script>
@@ -14,6 +10,6 @@ const props = defineProps({
     :class="{ 'opacity-50': disabled }"
     :disabled="disabled"
   >
-    {{ label }}
+    <slot>Yes</slot>
   </button>
 </template>

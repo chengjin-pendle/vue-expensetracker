@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
-import MyButton from './components/MyButton.vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import ExpenseItem from './components/ExpenseItem.vue'
-import MyTextInput from './components/MyTextInput.vue'
+import ExpenseForm from './components/ExpenseForm.vue'
 
-const expenseName = ref('')
-const expenseAmount = ref('')
+const uniqueId = ref(Number(localStorage.getItem('vue-uid')) ?? 0)
+
 const expenses = ref<Expense[]>([])
-const amountInputRef = ref<HTMLInputElement>()
-const formRef = ref<HTMLFormElement>()
+const submitCount = ref(0)
 
 const retrieveExpenses = () => {
   let data = localStorage.getItem('vue-expenses')
@@ -19,35 +17,28 @@ const storeExpenses = () => {
   localStorage.setItem('vue-expenses', JSON.stringify(expenses.value))
 }
 
-const addExpense = () => {
+const addExpense = (name: string, amount: string) => {
   let newExpense: Expense = {
-    name: expenseName.value,
-    amount: expenseAmount.value
+    id: uniqueId.value,
+    name,
+    amount
   }
   expenses.value.push(newExpense)
 
-  expenseName.value = ''
-  expenseAmount.value = ''
-  amountInputRef.value?.blur()
+  submitCount.value++
+  uniqueId.value++
 }
 
 const removeExpense = (index: number) => {
   expenses.value = expenses.value.filter((_, idx) => idx !== index)
 }
 
-const focusAmountInput = () => {
-  if (amountInputRef.value) amountInputRef.value.focus()
-}
-
-const buttonDisabled = computed(() => {
-  return !(Boolean(expenseName.value) && Boolean(expenseAmount.value))
-})
-
 const totalAmount = computed(() => {
   return expenses.value.reduce((a, item) => a + parseFloat(item.amount), 0)
 })
 
 watch(expenses, storeExpenses, { deep: true })
+watch(uniqueId, (newId) => localStorage.setItem('vue-uid', newId.toString()))
 
 onMounted(() => {
   expenses.value = retrieveExpenses()
@@ -59,28 +50,7 @@ onMounted(() => {
     <div>
       <h1 class="font-bold text-3xl">Expense Tracker</h1>
 
-      <form ref="formRef" @submit.prevent="addExpense" class="mt-4">
-        <div class="flex sm:flex-row flex-col gap-2 w-full md:w-3/4">
-          <MyTextInput
-            class="flex-1"
-            v-model="expenseName"
-            required
-            placeholder="Expense"
-            @keypress.enter="focusAmountInput"
-          />
-          <MyTextInput
-            class="flex-1"
-            ref="amountInputRef"
-            v-model="expenseAmount"
-            required
-            step=".01"
-            placeholder="Amount"
-            @keypress.enter="() => formRef?.requestSubmit()"
-          />
-        </div>
-
-        <MyButton label="Add" :disabled="buttonDisabled" class="text-sm" />
-      </form>
+      <ExpenseForm :key="submitCount" @submit="addExpense" />
     </div>
 
     <div class="flex items-center justify-between mt-8">
@@ -91,14 +61,15 @@ onMounted(() => {
       </p>
     </div>
 
-    <ExpenseItem
-      v-if="expenses.length > 0"
-      v-for="(expense, idx) in expenses"
-      :key="idx"
-      :expense="expense"
-      :index="idx"
-      @remove="removeExpense"
-    />
+    <template v-if="expenses.length > 0">
+      <ExpenseItem
+        v-for="(expense, idx) in expenses"
+        :key="expense.id"
+        :expense="expense"
+        :index="idx"
+        @remove="removeExpense"
+      />
+    </template>
 
     <div v-else>
       <p>No expenses added</p>
